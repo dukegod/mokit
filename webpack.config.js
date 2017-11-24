@@ -1,69 +1,14 @@
-const webpack = require('webpack');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
-const ExtractTextPlugin = require("extract-text-webpack-plugin");
+const VModule = require('vmodule-webpack-plugin');
+const pkg = require('./package.json');
+const alias = require('./alias');
 
-const extractCSS = new ExtractTextPlugin("css/bundle.css");
-
-const NODE_ENV = process.env.NODE_ENV || 'prod';
-console.log('NODE_ENV:', NODE_ENV);
-
-const configs = {
-  entry: {
-    mokit: `./lib/index.js`
-  },
-  output: {
-    path: './dist/',
-    filename: '[name]' + (NODE_ENV == 'prod' ? '.min' : '') + '.js'
-  },
-  devtool: NODE_ENV != 'prod' ? 'source-map' : null,
-  module: {
-    loaders: [
-      {
-        test: /\.js\?*.*$/,
-        loader: "babel"
-      },
-      {
-        test: /\.json\?*.*$/,
-        loader: "json",
-      },
-      {
-        test: /\.html\?*.*$/,
-        loader: 'raw'
-      },
-      {
-        test: /\.(png|jpg|gif)\?*.*$/,
-        loader: 'url?limit=8192&name=img/[hash].[ext]'
-      },
-      {
-        test: /\.(eot|woff|woff2|webfont|ttf|svg)\?*.*$/,
-        loader: 'url?limit=8192&name=font/[hash].[ext]'
-      },
-      {
-        test: /\.less\?*.*$/,
-        loader: extractCSS.extract("css!less", {
-          publicPath: '../'
-        })
-      },
-      {
-        test: /\.css\?*.*$/,
-        loader: extractCSS.extract("css", {
-          publicPath: '../'
-        })
-      }
-    ]
-  },
-  plugins: []
-};
-
-if (NODE_ENV == 'prod') {
-  configs.plugins.push(new webpack.optimize.UglifyJsPlugin({
-    compress: {
-      warnings: false
-    }
+module.exports = function (webpackConf, webpack) {
+  let info = JSON.stringify({ name: pkg.name, version: pkg.version });
+  webpackConf.plugins.push(new VModule({
+    name: '$info',
+    content: info
   }));
-}
-
-
-
-module.exports = configs;
+  webpackConf.resolve = webpackConf.resolve || {};
+  webpackConf.resolve.alias = webpackConf.resolve.alias || {};
+  Object.assign(webpackConf.resolve.alias, alias);
+};
